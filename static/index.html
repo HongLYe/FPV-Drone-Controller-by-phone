@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>FPV Controller (PWA)</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#111">
+
+<style>
+  :root { --bg:#0b0b0b; --card:#1c1c1c; --muted:#888; --accent:#20c997; --danger:#ff6b6b; }
+  html,body{height:100%; margin:0; background:var(--bg); color:#fff; font-family:Inter, system-ui, sans-serif; -webkit-tap-highlight-color: transparent;}
+  .wrap{max-width:900px; margin:10px auto; padding:12px;}
+  header{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;}
+  h1{font-size:18px;margin:0;}
+  .status{font-size:13px;color:var(--muted);}
+  .board{display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px;}
+  .joystick{width:160px;height:160px;background:var(--card);border-radius:999px;position:relative; touch-action:none; box-shadow:0 6px 18px rgba(0,0,0,0.6);}
+  .stick{width:56px;height:56px;border-radius:999px;background:linear-gradient(180deg,#7fffd4,#008f5a);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-weight:600;color:#002;}
+  .controls{flex:1;min-width:220px;}
+  .buttons{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;}
+  .btn{min-width:70px;padding:10px 12px;border-radius:10px;background:#121212;border:1px solid #2a2a2a;color:#fff;font-weight:600;touch-action:none}
+  .indicator{display:inline-block;padding:6px 10px;border-radius:8px;background:#111;border:1px solid #222;color:var(--muted);margin-left:8px;font-size:13px}
+  .led{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .led.connected{background:#0f0}
+  .led.disconnected{background:#333}
+  .led.arm{background:var(--danger)}
+  .footer{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
+  @media (max-width:520px){ .board{gap:12px} .joystick{width:140px;height:140px} .stick{width:48px;height:48px} }
+</style>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>FPV Drone Controller</h1>
+        <div class="status"><span id="connLed" class="led disconnected"></span><span id="connText">Disconnected</span>
+          <span class="indicator" id="armIndicator" title="Arm state"><span id="armLed" class="led" style="background:#444"></span><span id="armText">Disarmed</span></span>
+        </div>
+      </div>
+      <div class="status">Tip: Add to home screen for standalone app</div>
+    </header>
+
+    <div class="board">
+      <div id="leftJoy" class="joystick"><div id="leftStick" class="stick">T</div></div>
+      <div class="controls">
+        <div style="display:flex;gap:8px;justify-content:center;align-items:center">
+          <div style="text-align:center;color:var(--muted)">Buttons</div>
+        </div>
+        <div class="buttons">
+          <button class="btn" data-btn="A">A</button>
+          <button class="btn" data-btn="B">B</button>
+          <button class="btn" data-btn="X">X</button>
+          <button class="btn" data-btn="Y">Y</button>
+          <button class="btn" data-btn="LB">LB</button>
+          <button class="btn" data-btn="RB">RB</button>
+          <button class="btn" data-btn="START">Start</button>
+          <button class="btn" data-btn="BACK">Select</button>
+          <button id="armBtn" class="btn" data-btn="ARM">ARM</button>
+        </div>
+        <div style="text-align:center;color:var(--muted);margin-top:10px">
+          <small>Throttle curve: <span id="curveVal">linear</span> • Deadzone: <span id="dzVal">0.07</span></small>
+        </div>
+      </div>
+      <div id="rightJoy" class="joystick"><div id="rightStick" class="stick">R</div></div>
+    </div>
+
+    <div class="footer">
+      <small>Works with Steam simulators. Make sure the server is running on your PC and you installed the virtual gamepad driver (ViGEm) + server-side requirements.</small>
+    </div>
+  </div>
+
+<script>
+/*
+  Client behavior:
+  - Emits "joystick" events {stick:'left'|'right', x:float, y:float}  range [-1..1], y: up positive
+  - Emits "button" events {btn:'A'|'B'|'X'|'Y'|'LB'|'RB'|'START'|'BACK'|'ARM', state:'down'|'up'}
+  - Implements local deadzone, smoothing, throttle curve, arm toggle (long press)
+*/
+
+const socket = io({transports:['websocket','polling']});
+const connLed = document.getElementById('connLed');
+const connText = document.getElementById('connText');
+const armLed = document.getElementById('armLed');
+const armText = document.getElementById('armText');
+const armBtn = document.getElementById('armBtn');
+let armed = false;
+
+socket.on('connect', ()=>{ connLed.className='led connected'; connText.textContent='Connected'; });
+socket.on('disconnect', ()=>{ connLed.className='led disconnected'; connText.textContent='Disconnected'; });
+
+// config
+const DEADZONE = 0.07;
+const SMOOTHING_ALPHA = 0.35; // 0=instant, 1=very slow
+const THROTTLE_CURVE = 'expo'; // options: 'linear' or 'expo' (expo feels more FPS/drone-like)
+document.getElementById('dzVal').textContent = DEADZONE.toFixed(2);
+document.getElementById('curveVal').textContent = THROTTLE_CURVE;
+
+// helper: apply deadzone and rescale
+function applyDeadzoneAndScale(v){
+  if (Math.abs(v) <= DEADZONE) return 0;
+  const sign = Math.sign(v);
+  // scale so after deadzone we map to full range
+  const scaled = (Math.abs(v) - DEADZONE) / (1 - DEADZONE);
+  return sign * scaled;
+}
+function throttleCurve(v){
+  if (THROTTLE_CURVE === 'linear') return v;
+  // small expo: stronger near ends, gentler in middle
+  const a = 0.6;
+  return Math.sign(v) * Math.pow(Math.abs(v), 1 + a);
+}
+
+// smoothing state
+const prev = { left:{x:0,y:0}, right:{x:0,y:0} };
+
+// Joystick wiring (generic)
+function setupJoystick(joyEl, stickEl, name){
+  let activeId = null;
+  const rect = ()=>joyEl.getBoundingClientRect();
+  const center = ()=>({x:joyEl.offsetWidth/2, y:joyEl.offsetHeight/2});
+  const max = ()=>Math.min(joyEl.offsetWidth, joyEl.offsetHeight)/2;
+
+  function toCoords(t){
+    const r = rect();
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function emit(x,y){
+    // convert to -1..1 with up positive (invert Y)
+    let nx = x / max();
+    let ny = -y / max();
+    nx = Math.max(-1, Math.min(1, nx));
+    ny = Math.max(-1, Math.min(1, ny));
+    // deadzone + curve
+    nx = applyDeadzoneAndScale(nx);
+    ny = applyDeadzoneAndScale(ny);
+    if (name === 'left') ny = throttleCurve(ny); // throttle curve
+    // smoothing
+    prev[name].x = (1 - SMOOTHING_ALPHA) * nx + SMOOTHING_ALPHA * prev[name].x;
+    prev[name].y = (1 - SMOOTHING_ALPHA) * ny + SMOOTHING_ALPHA * prev[name].y;
+    // update visual
+    stickEl.style.left = (50 + (prev[name].x * 50)) + '%';
+    stickEl.style.top = (50 - (prev[name].y * 50)) + '%';
+    // send
+    socket.emit('joystick', { stick: name, x: Number(prev[name].x.toFixed(4)), y: Number(prev[name].y.toFixed(4)) });
+  }
+
+  // touch handlers
+  joyEl.addEventListener('touchstart', (ev)=>{
+    for (let t of ev.changedTouches) {
+      if (activeId === null) { activeId = t.identifier; const c = toCoords(t); emit(c.x - center().x, c.y - center().y); break; }
+    }
+    ev.preventDefault();
+  }, {passive:false});
+  joyEl.addEventListener('touchmove', (ev)=>{
+    for (let t of ev.changedTouches) {
+      if (t.identifier === activeId){ const c = toCoords(t); emit(c.x - center().x, c.y - center().y); break; }
+    }
+    ev.preventDefault();
+  }, {passive:false});
+  function release(){
+    activeId = null;
+    // center visually; for left (throttle) we'll keep last throttle as is (do not snap to zero)
+    if (name === 'left') {
+      // keep the visual position based on prev[name].y - do nothing
+    } else {
+      prev[name].x = 0; prev[name].y = 0; stickEl.style.left = '50%'; stickEl.style.top = '50%';
+    }
+    // always emit current neutral/last
+    socket.emit('joystick', { stick: name, x: Number(prev[name].x.toFixed(4)), y: Number(prev[name].y.toFixed(4)) });
+  }
+  joyEl.addEventListener('touchend', (ev)=>{ for (let t of ev.changedTouches) if (t.identifier === activeId) release(); ev.preventDefault(); }, {passive:false});
+  joyEl.addEventListener('touchcancel', (ev)=>{ for (let t of ev.changedTouches) if (t.identifier === activeId) release(); ev.preventDefault(); }, {passive:false});
+
+  // mouse fallback for desktop testing
+  let mouseDown = false;
+  joyEl.addEventListener('mousedown', (ev)=>{ mouseDown = true; const c = {clientX:ev.clientX, clientY:ev.clientY}; const r = rect(); emit(c.clientX - r.left - center().x, c.clientY - r.top - center().y); ev.preventDefault(); });
+  window.addEventListener('mousemove', (ev)=>{ if (!mouseDown) return; const r = rect(); emit(ev.clientX - r.left - center().x, ev.clientY - r.top - center().y); });
+  window.addEventListener('mouseup', ()=>{ if(!mouseDown) return; mouseDown=false; release(); });
+
+}
+
+// instantiate joysticks
+setupJoystick(document.getElementById('leftJoy'), document.getElementById('leftStick'), 'left');
+setupJoystick(document.getElementById('rightJoy'), document.getElementById('rightStick'), 'right');
+
+// Buttons (touch + mouse)
+document.querySelectorAll('.btn').forEach(btn=>{
+  const name = btn.dataset.btn || btn.textContent.trim();
+  function send(state){ socket.emit('button', { btn: name, state: state }); }
+  // touch
+  btn.addEventListener('touchstart', (e)=>{ send('down'); e.preventDefault(); });
+  btn.addEventListener('touchend', (e)=>{ send('up'); e.preventDefault(); });
+  // mouse
+  btn.addEventListener('mousedown', ()=>send('down'));
+  btn.addEventListener('mouseup', ()=>send('up'));
+  btn.addEventListener('mouseleave', ()=>send('up'));
+});
+
+// Arm button does toggle locally (long-press compatibility)
+armBtn.addEventListener('click', ()=>{
+  armed = !armed;
+  armLed.style.background = armed ? '#ff5555' : '#444';
+  armText.textContent = armed ? 'Armed' : 'Disarmed';
+  socket.emit('button', { btn:'ARM', state: armed ? 'down' : 'up' });
+});
+
+// register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js').catch(()=>{ /* ignore */ });
+}
+</script>
+</body>
+</html>
