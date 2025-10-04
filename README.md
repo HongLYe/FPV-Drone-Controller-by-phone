@@ -70,6 +70,7 @@ pip install flask python-socketio eventlet vgamepad
 
 3️⃣ Project Structure
 fpv-drone-controller/
+
 ``
 │
 ├─ server.py            # Python server
@@ -132,3 +133,4 @@ License
 
 
 MIT License – feel free to use and modify.
+
