@@ -70,6 +70,7 @@ pip install flask python-socketio eventlet vgamepad
 
 3️⃣ Project Structure
 fpv-drone-controller/
+``
 │
 ├─ server.py            # Python server
 ├─ static/
@@ -79,6 +80,7 @@ fpv-drone-controller/
 │   └─ icons/
 │       ├─ icon-192.png
 │       └─ icon-512.png
+``
 
 4️⃣ Run the server
 python server.py
@@ -127,5 +129,6 @@ Designed for Windows + Steam simulators. Linux / Mac support requires alternativ
 Works offline after first load thanks to Service Worker caching.
 
 License
+
 
 MIT License – feel free to use and modify.
