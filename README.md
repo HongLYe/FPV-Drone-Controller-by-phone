@@ -1,5 +1,3 @@
-I can't directly send downloadable files through this chat, but here's a **Python script** that will automatically generate `README.md` for you in your project folder. Just run it and you're done!
-
 ```python
 # save this as: create_readme.py
 # run it in your project folder: python create_readme.py
