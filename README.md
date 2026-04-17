@@ -1,136 +1,111 @@
-FPV Drone Controller
+# 🚁 FPV Drone Controller by Phone
 
-Use your phone as a real FPV drone controller!
-This project allows you to control FPV drone simulators (like Liftoff, DRL, Velocidrone) using your phone. It emulates a real Xbox controller, works as a PWA, and supports touch joysticks + buttons.
+> Turn your smartphone into a wireless FPV drone controller for simulators like Liftoff, DRL Simulator, Velocidrone, and more.
 
-Features
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Supported-orange.svg)](https://web.dev/progressive-web-apps/)
 
-Two joysticks:
+<div align="center">
+  <img src="static/demo-placeholder.png" alt="Phone controller UI" width="600">
+  <p><em>Phone UI with dual joysticks + button panel (demo image)</em></p>
+</div>
 
-Left: throttle & yaw (throttle doesn’t snap back)
+---
 
-Right: pitch & roll
+## ✨ Features
 
-Buttons: A/B/X/Y, LB/RB, Start, Select, and ARM toggle
+- 🎮 **Dual virtual joysticks**: Mode 2 layout (left: throttle/yaw, right: pitch/roll)
+- 🔘 **Full button set**: A/B/X/Y, LB/RB, Start, Select, plus dedicated ARM toggle
+- 📱 **Progressive Web App (PWA)**: Install to home screen, works offline after first load
+- 📡 **Low-latency control**: Real-time input via Socket.IO over local Wi-Fi
+- 🖥️ **Xbox 360 emulation**: Works with any simulator that supports XInput controllers
+- ⚙️ **Configurable**: Deadzone, throttle curve, and button mapping options (coming soon)
 
-Fully touch + mouse compatible
+---
 
-Responsive mobile-friendly PWA (add to home screen)
+## 🚀 Quick Start (5 Minutes)
 
-Offline caching via Service Worker
+### Prerequisites
+- Windows PC (Linux/macOS support coming soon)
+- Python 3.10 or higher
+- Same Wi-Fi network for phone and PC
 
-Real-time communication with a Python server using Socket.IO
+### Step 1: Install ViGEmBus Driver (Windows Only)
+Download and install the virtual controller driver:
+🔗 [ViGEmBus Releases → Download latest](https://github.com/ViGEm/ViGEmBus/releases)
 
-Emulates an Xbox 360 controller on Windows (via ViGEm + vgamepad)
+> ⚠️ Reboot your PC after installation.
 
-Demo
+### Step 2: Clone & Setup
+```bash
+# Clone the repo
+git clone https://github.com/HongLYe/FPV-Drone-Controller-by-phone.git
+cd FPV-Drone-Controller-by-phone
 
-Add screenshots or GIF here if you like
-
-Requirements
-
-PC (Windows recommended):
-
-Python 3.10+
-
-ViGEmBus driver (for virtual Xbox controller) – download from ViGEmBus Releases
-
-pip packages: flask, python-socketio, eventlet, vgamepad
-
-Phone / Browser:
-
-Modern browser (Chrome, Edge, Safari, Firefox)
-
-Same Wi-Fi network as your PC
-
-Supports PWA (add to home screen)
-
-Installation
-1️⃣ Install ViGEmBus
-
-Download and install the latest driver from ViGEmBus Releases
-
-Reboot if required
-
-2️⃣ Set up Python environment
-# Create a virtual environment
+# Create virtual environment
 python -m venv venv
 
 # Activate it
-# Windows
+# Windows:
 venv\Scripts\activate
-# Linux / Mac
+# Linux/Mac:
 source venv/bin/activate
 
-# Upgrade pip
-pip install --upgrade pip
+# Install dependencies
+pip install -r requirements.txt# 🚁 FPV Drone Controller by Phone
 
-# Install required packages
-pip install flask python-socketio eventlet vgamepad
+> Turn your smartphone into a wireless FPV drone controller for simulators like Liftoff, DRL Simulator, Velocidrone, and more.
 
-3️⃣ Project Structure
-fpv-drone-controller/
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Supported-orange.svg)](https://web.dev/progressive-web-apps/)
 
-``
-│
-├─ server.py            # Python server
-├─ static/
-│   ├─ index.html       # Frontend PWA
-│   ├─ manifest.json    # PWA manifest
-│   ├─ sw.js            # Service Worker
-│   └─ icons/
-│       ├─ icon-192.png
-│       └─ icon-512.png
-``
+<div align="center">
+  <img src="static/demo-placeholder.png" alt="Phone controller UI" width="600">
+  <p><em>Phone UI with dual joysticks + button panel (demo image)</em></p>
+</div>
 
-4️⃣ Run the server
-python server.py
+---
 
+## ✨ Features
 
-By default, the server runs on http://0.0.0.0:5000/
+- 🎮 **Dual virtual joysticks**: Mode 2 layout (left: throttle/yaw, right: pitch/roll)
+- 🔘 **Full button set**: A/B/X/Y, LB/RB, Start, Select, plus dedicated ARM toggle
+- 📱 **Progressive Web App (PWA)**: Install to home screen, works offline after first load
+- 📡 **Low-latency control**: Real-time input via Socket.IO over local Wi-Fi
+- 🖥️ **Xbox 360 emulation**: Works with any simulator that supports XInput controllers
+- ⚙️ **Configurable**: Deadzone, throttle curve, and button mapping options (coming soon)
 
-Open this URL on your phone browser (http://<PC_IP>:5000)
+---
 
-Add to home screen for fullscreen PWA
+## 🚀 Quick Start (5 Minutes)
 
-5️⃣ Using the controller
+### Prerequisites
+- Windows PC (Linux/macOS support coming soon)
+- Python 3.10 or higher
+- Same Wi-Fi network for phone and PC
 
-Left joystick: Throttle & Yaw
+### Step 1: Install ViGEmBus Driver (Windows Only)
+Download and install the virtual controller driver:
+🔗 [ViGEmBus Releases → Download latest](https://github.com/ViGEm/ViGEmBus/releases)
 
-Right joystick: Pitch & Roll
+> ⚠️ Reboot your PC after installation.
 
-Buttons: tap or hold as needed
+### Step 2: Clone & Setup
+```bash
+# Clone the repo
+git clone https://github.com/HongLYe/FPV-Drone-Controller-by-phone.git
+cd FPV-Drone-Controller-by-phone
 
-ARM toggle: click the ARM button
+# Create virtual environment
+python -m venv venv
 
-All controls emulate an Xbox controller visible in Steam simulators
+# Activate it
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
 
-Troubleshooting
-
-Controller not detected:
-
-Make sure ViGEmBus driver is installed and server is running
-
-Buttons not responding:
-
-Ensure your phone is connected to the same Wi-Fi as PC
-
-Reload the PWA if connection fails
-
-Server errors:
-
-Check Python packages installed correctly (pip list)
-
-Make sure Python version >= 3.10
-
-Notes
-
-Designed for Windows + Steam simulators. Linux / Mac support requires alternative virtual joystick solutions.
-
-Works offline after first load thanks to Service Worker caching.
-
-License
-
-
-MIT License – feel free to use and modify.
-
+# Install dependencies
+pip install -r requirements.txt
