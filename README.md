@@ -1,4 +1,4 @@
-# 🚁 FPV Drone Controller by Phone
+[table-0da02027-9b21-4665-a277-2f4036947d5c.csv](https://github.com/user-attachments/files/26809325/table-0da02027-9b21-4665-a277-2f4036947d5c.csv)# 🚁 FPV Drone Controller by Phone
 
 > Turn your smartphone into a wireless FPV drone controller for simulators like Liftoff, DRL Simulator, Velocidrone, and more.
 
@@ -63,3 +63,33 @@ You should see output like:
 2024-01-15 10:30:45 [INFO]    Port: 5000
 2024-01-15 10:30:45 [INFO]    Gamepad: ✓ Ready
 2024-01-15 10:30:45 [INFO] ✓ Virtual Xbox 360 gamepad initialized
+```
+Step 4: Connect Your Phone
+1.Find your PC's local IP address:
+  Windows: Open Command Prompt → type ipconfig → look for "IPv4 Address" (e.g., 192.168.1.100)
+  Mac/Linux: Open Terminal → type ifconfig or ip a
+2.On your phone's browser, open:
+```bash
+http://192.168.1.100:5000
+```
+🔐 Use http:// not https:// — this is a local development server
+3.(Optional) Tap "Add to Home Screen" for fullscreen PWA experience:
+  Chrome Android: Menu (⋮) → "Add to Home screen"
+  Safari iOS: Share button (📤) → "Add to Home Screen"
+
+Step 5: Test in Simulator
+1.Launch your FPV simulator: Liftoff / DRL / Velocidrone / Uncrashed
+2.Go to Controller Settings → select "Xbox 360 Controller"
+3.Move joysticks on your phone → drone should respond immediately! 🎉
+4.Press the 🔴 ARM button to toggle arm/disarm (mapped to Xbox GUIDE button 🏠)
+
+📱 Phone Interface Guide
+[Uploading taControl,Function,Default Simulator Mapping
+🕹️ Left Stick,Throttle (Y-axis) + Yaw (X-axis),Mode 2 (standard)
+🕹️ Right Stick,Pitch (Y-axis) + Roll (X-axis),Mode 2 (standard)
+🔘 A / B / X / Y,Action buttons,"Camera view, reset, aux functions"
+🔘 LB / RB,Shoulder buttons,"Camera angle, OSD toggle"
+🔘 START / BACK,Menu navigation,"Pause, reset model, menu"
+🔴 ARM,Toggle arm/disarm,Xbox GUIDE button (🏠) ⭐ble-0da02027-9b21-4665-a277-2f4036947d5c.csv…]()
+
+💡 ARM Button Note: The ARM toggle uses the Xbox "Guide" button (🏠) by default to avoid conflicts with normal X/Y/A/B gameplay buttons. If your simulator doesn't respond to the Guide button, edit server.py line ~52 to remap it (see Configuration section).
