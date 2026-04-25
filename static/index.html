@@ -10,12 +10,12 @@
 <style>
   :root { --bg:#0b0b0b; --card:#1c1c1c; --muted:#888; --accent:#20c997; --danger:#ff6b6b; }
   html,body{height:100%; margin:0; background:var(--bg); color:#fff; font-family:Inter, system-ui, sans-serif; -webkit-tap-highlight-color: transparent;}
-  .wrap{max-width:900px; margin:10px auto; padding:12px;}
-  header{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;}
+  .wrap{max-width:900px; margin:10px auto; padding:12px; box-sizing: border-box;}
+  header{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;flex-wrap: wrap; gap: 8px;}
   h1{font-size:18px;margin:0;}
   .status{font-size:13px;color:var(--muted);}
   .board{display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px;}
-  .joystick{width:160px;height:160px;background:var(--card);border-radius:999px;position:relative; touch-action:none; box-shadow:0 6px 18px rgba(0,0,0,0.6);}
+  .joystick{width:160px;height:160px;background:var(--card);border-radius:999px;position:relative; touch-action:none; box-shadow:0 6px 18px rgba(0,0,0,0.6); flex-shrink: 0;}
   .stick{width:56px;height:56px;border-radius:999px;background:linear-gradient(180deg,#7fffd4,#008f5a);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-weight:600;color:#002;}
   .controls{flex:1;min-width:220px;}
   .buttons{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;}
@@ -26,7 +26,8 @@
   .led.disconnected{background:#333}
   .led.arm{background:var(--danger)}
   .footer{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
-  @media (max-width:520px){ .board{gap:12px} .joystick{width:140px;height:140px} .stick{width:48px;height:48px} }
+  @media (max-width:768px){ .board{gap:12px} .joystick{width:140px;height:140px} .stick{width:48px;height:48px} }
+  @media (max-width:520px){ .board{flex-direction: column; align-items: center;} .joystick{width:160px;height:160px} .stick{width:56px;height:56px} .controls{min-width:100%;} header{flex-direction:column;align-items:flex-start;} .status{width:100%;} }
 </style>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
@@ -161,13 +162,9 @@ function setupJoystick(joyEl, stickEl, name){
   }, {passive:false});
   function release(){
     activeId = null;
-    // center visually; for left (throttle) we'll keep last throttle as is (do not snap to zero)
-    if (name === 'left') {
-      // keep the visual position based on prev[name].y - do nothing
-    } else {
-      prev[name].x = 0; prev[name].y = 0; stickEl.style.left = '50%'; stickEl.style.top = '50%';
-    }
-    // always emit current neutral/last
+    // center both joysticks visually and reset values
+    prev[name].x = 0; prev[name].y = 0; stickEl.style.left = '50%'; stickEl.style.top = '50%';
+    // emit neutral position
     socket.emit('joystick', { stick: name, x: Number(prev[name].x.toFixed(4)), y: Number(prev[name].y.toFixed(4)) });
   }
   joyEl.addEventListener('touchend', (ev)=>{ for (let t of ev.changedTouches) if (t.identifier === activeId) release(); ev.preventDefault(); }, {passive:false});
